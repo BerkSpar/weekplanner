@@ -28,7 +28,8 @@ jobs:
 
       - name: Move build to docs
         run: |
-          mv build/web/ docs/
+          rm -rf docs
+          mv build/web docs
 
       - name: Commit report
         run: |
