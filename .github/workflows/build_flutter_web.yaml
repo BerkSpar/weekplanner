@@ -5,14 +5,12 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    permissions:
-      # Give the default GITHUB_TOKEN write permission to commit and push the
-      # added or changed files to the repository.
-      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -30,8 +28,14 @@ jobs:
       - name: Build Web
         run: flutter build web --release --wasm
 
-      - name: Deploy
+      - name: Move build to docs
         run: |
           mv build/web/ docs/
 
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Commit report
+        run: |
+          git add -A
+          git config --global user.name 'Felipe Passos'
+          git config --global user.email 'berkspar@gmail.com'
+          git commit -am "bot: automated deploy"
+          git push
