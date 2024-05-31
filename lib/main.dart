@@ -6,7 +6,7 @@ void main() {
 
 final activities = [
   Activity(
-    title: "Planning",
+    title: "Planning I",
     subtitle: "Set time for tasks",
     duration: const Duration(hours: 1),
     kind: Kind.handsOn,
