@@ -2,8 +2,8 @@ name: Build Flutter Web
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -13,9 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
+      - uses: actions/checkout@v1
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
@@ -34,8 +32,10 @@ jobs:
 
       - name: Commit report
         run: |
-          git add -A
           git config --global user.name 'Felipe Passos'
           git config --global user.email 'berkspar@gmail.com'
-          git commit -am "bot: automated deploy"
-          git push origin main
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+          git checkout "${GITHUB_REF:11}"
+          git add -A
+          git commit -am "bot: automated build"
+          git push
