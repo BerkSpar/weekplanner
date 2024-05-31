@@ -38,4 +38,4 @@ jobs:
           git config --global user.name 'Felipe Passos'
           git config --global user.email 'berkspar@gmail.com'
           git commit -am "bot: automated deploy"
-          git push
+          git push origin main
