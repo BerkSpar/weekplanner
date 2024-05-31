@@ -586,6 +586,7 @@ class ActivityCard extends StatelessWidget {
       flex: duration.inMinutes,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: ShapeDecoration(
             color: isSelected ? kind.primary : Colors.grey.shade200,
