@@ -150,10 +150,32 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    int _maxColumnCount() {
+      if (size.width < 600) {
+        return 1;
+      }
+
+      if (size.width < 800) {
+        return 2;
+      }
+
+      if (size.width < 1200) {
+        return 3;
+      }
+
+      if (size.width < 1600) {
+        return 4;
+      }
+
+      return 5;
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FC),
       floatingActionButton: FloatingActionButton.extended(
-        label: Text("Add Activity"),
+        label: const Text("Add Activity"),
         icon: const Icon(Icons.add),
         onPressed: () async {
           await showDialog(
@@ -187,26 +209,27 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              ...Kind.all
-                  .map((kind) => KindItem(
-                      kind: kind,
-                      isActive: selectedKinds.isNotEmpty
-                          ? selectedKinds.contains(kind)
-                          : true,
-                      onTap: () {
-                        if (selectedKinds.contains(kind)) {
-                          setState(() {
-                            selectedKinds.remove(kind);
-                          });
-                          return;
-                        }
+              if (size.width > 800)
+                ...Kind.all
+                    .map((kind) => KindItem(
+                        kind: kind,
+                        isActive: selectedKinds.isNotEmpty
+                            ? selectedKinds.contains(kind)
+                            : true,
+                        onTap: () {
+                          if (selectedKinds.contains(kind)) {
+                            setState(() {
+                              selectedKinds.remove(kind);
+                            });
+                            return;
+                          }
 
-                        setState(() {
-                          selectedKinds.add(kind);
-                        });
-                      }))
-                  .toList()
-                  .withDivider(const SizedBox(width: 24))
+                          setState(() {
+                            selectedKinds.add(kind);
+                          });
+                        }))
+                    .toList()
+                    .withDivider(const SizedBox(width: 24))
             ],
           ),
           const SizedBox(height: 32),
@@ -214,6 +237,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: Weekday.all
+                .getRange(0, _maxColumnCount())
                 .map((weekday) {
                   return Expanded(
                     child: WeekdayColumn(
