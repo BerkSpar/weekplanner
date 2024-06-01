@@ -1,5 +1,5 @@
 <h1 align="center">
-  Weekplanner
+  WeekPlanner
 </h1>
 
 <h4 align="center">Plan your weeks easily</h4>
