@@ -4,7 +4,7 @@ void main() {
   runApp(const MyApp());
 }
 
-final activities = [
+final activitiesData = [
   Activity(
     title: "Planning I",
     subtitle: "Set time for tasks",
@@ -116,6 +116,26 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class ActivityController extends ChangeNotifier {
+  List<Activity> activities = activitiesData;
+
+  void add(Activity activity) {
+    activities.add(activity);
+    notifyListeners();
+  }
+
+  void remove(Activity activity) {
+    activities.remove(activity);
+    notifyListeners();
+  }
+
+  void update(Activity activity) {
+    final index = activities.indexWhere((element) => element == activity);
+    activities[index] = activity;
+    notifyListeners();
+  }
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -126,77 +146,88 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Kind> selectedKinds = [];
 
+  final controller = ActivityController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FC),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
+      floatingActionButton: FloatingActionButton.extended(
+        label: Text("Add Activity"),
+        icon: const Icon(Icons.add),
+        onPressed: () async {
+          await showDialog(
             context: context,
             builder: (context) {
-              return const ActivityDialog();
+              return ActivityDialog(
+                controller: controller,
+              );
             },
           );
+
+          setState(() {});
         },
       ),
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                const Text(
-                  "Investigate I",
-                  style: TextStyle(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  decoration: const InputDecoration(
+                    hintText: "Write the title here...",
+                    border: InputBorder.none,
+                  ),
+                  style: const TextStyle(
                     color: Color(0xFF64677C),
                     fontSize: 40,
                     fontWeight: FontWeight.w700,
                     height: 0,
                   ),
                 ),
-                const Spacer(),
-                ...Kind.all
-                    .map((kind) => KindItem(
-                        kind: kind,
-                        isActive: selectedKinds.isNotEmpty
-                            ? selectedKinds.contains(kind)
-                            : true,
-                        onTap: () {
-                          if (selectedKinds.contains(kind)) {
-                            setState(() {
-                              selectedKinds.remove(kind);
-                            });
-                            return;
-                          }
-
+              ),
+              ...Kind.all
+                  .map((kind) => KindItem(
+                      kind: kind,
+                      isActive: selectedKinds.isNotEmpty
+                          ? selectedKinds.contains(kind)
+                          : true,
+                      onTap: () {
+                        if (selectedKinds.contains(kind)) {
                           setState(() {
-                            selectedKinds.add(kind);
+                            selectedKinds.remove(kind);
                           });
-                        }))
-                    .toList()
-                    .withDivider(const SizedBox(width: 24))
-              ],
-            ),
-            const SizedBox(height: 32),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: Weekday.all
-                  .map((weekday) {
-                    return Expanded(
-                      child: WeekdayColumn(
-                        weekday: weekday,
-                        selectedKinds: selectedKinds,
-                      ),
-                    );
-                  })
+                          return;
+                        }
+
+                        setState(() {
+                          selectedKinds.add(kind);
+                        });
+                      }))
                   .toList()
-                  .withDivider(const SizedBox(width: 32))
-                  .toList(),
-            ),
-          ],
-        ),
+                  .withDivider(const SizedBox(width: 24))
+            ],
+          ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: Weekday.all
+                .map((weekday) {
+                  return Expanded(
+                    child: WeekdayColumn(
+                      weekday: weekday,
+                      selectedKinds: selectedKinds,
+                      controller: controller,
+                    ),
+                  );
+                })
+                .toList()
+                .withDivider(const SizedBox(width: 32))
+                .toList(),
+          ),
+        ],
       ),
     );
   }
@@ -280,10 +311,12 @@ class Activity {
 
 class ActivityDialog extends StatefulWidget {
   final Activity? activity;
+  final ActivityController controller;
 
   const ActivityDialog({
     super.key,
     this.activity,
+    required this.controller,
   });
 
   @override
@@ -314,27 +347,47 @@ class _ActivityDialogState extends State<ActivityDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextFormField(
-              initialValue: activity.title,
-              decoration: InputDecoration(
-                hintText: "Title",
-                border: InputBorder.none,
-              ),
-              style: TextStyle(
-                color: Color(0xFF141417),
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                overflow: TextOverflow.ellipsis,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    initialValue: activity.title,
+                    onChanged: (value) => activity.title = value,
+                    decoration: const InputDecoration(
+                      hintText: "Title",
+                      border: InputBorder.none,
+                    ),
+                    style: const TextStyle(
+                      color: Color(0xFF141417),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    if (widget.activity != null) {
+                      widget.controller.update(activity);
+                    } else {
+                      widget.controller.add(activity);
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(Icons.save),
+                  tooltip: "Save",
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             TextFormField(
               initialValue: activity.subtitle,
-              decoration: InputDecoration(
+              onChanged: (value) => activity.subtitle = value,
+              decoration: const InputDecoration(
                 hintText: "Write the description here...",
                 border: InputBorder.none,
               ),
-              style: TextStyle(
+              style: const TextStyle(
                 color: Color(0xFF141417),
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -466,42 +519,60 @@ class KindItem extends StatelessWidget {
   }
 }
 
-class WeekdayColumn extends StatelessWidget {
+class WeekdayColumn extends StatefulWidget {
   final Weekday weekday;
   final List<Kind> selectedKinds;
+  final ActivityController controller;
 
   const WeekdayColumn({
     super.key,
     required this.weekday,
+    required this.controller,
     this.selectedKinds = const [],
   });
+
+  @override
+  State<WeekdayColumn> createState() => _WeekdayColumnState();
+}
+
+class _WeekdayColumnState extends State<WeekdayColumn> {
+  @override
+  void initState() {
+    super.initState();
+
+    widget.controller.addListener(() {
+      setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 300,
-      height: 700,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          HeaderCard(name: weekday.name),
+          HeaderCard(name: widget.weekday.name),
           const SizedBox(height: 16),
-          ...activities
-              .where((activity) => activity.weekday == weekday)
+          ...widget.controller.activities
+              .where((activity) => activity.weekday == widget.weekday)
               .map((activity) {
                 return ActivityCard(
                   title: activity.title,
                   subtitle: activity.subtitle,
                   duration: activity.duration,
                   kind: activity.kind,
-                  isSelected: selectedKinds.isNotEmpty
-                      ? selectedKinds.contains(activity.kind)
+                  isSelected: widget.selectedKinds.isNotEmpty
+                      ? widget.selectedKinds.contains(activity.kind)
                       : true,
-                  onTap: () {
-                    showDialog(
+                  onTap: () async {
+                    await showDialog(
                       context: context,
                       builder: (context) {
-                        return ActivityDialog(activity: activity);
+                        return ActivityDialog(
+                          activity: activity,
+                          controller: widget.controller,
+                        );
                       },
                     );
                   },
@@ -582,72 +653,70 @@ class ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      flex: duration.inMinutes,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: ShapeDecoration(
-            color: isSelected ? kind.primary : Colors.grey.shade200,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        height: duration.inMinutes.toDouble() / 60 * 200,
+        decoration: ShapeDecoration(
+          color: isSelected ? kind.primary : Colors.grey.shade200,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(),
-                      Text(
-                        title,
-                        maxLines: 2,
-                        style: const TextStyle(
-                          color: Color(0xFF141417),
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(),
+                    Text(
+                      title,
+                      maxLines: 2,
+                      style: const TextStyle(
+                        color: Color(0xFF141417),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (subtitle != null)
-                        Expanded(
-                          child: Text(
-                            subtitle!,
-                            maxLines: 30,
-                            style: const TextStyle(
-                              color: Color(0xFF141417),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                    ),
+                    if (subtitle != null)
+                      Expanded(
+                        child: Text(
+                          subtitle!,
+                          maxLines: 30,
+                          style: const TextStyle(
+                            color: Color(0xFF141417),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.all(16),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: ShapeDecoration(
-                      color: isSelected ? kind.dark : Colors.grey.shade300,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: Text(duration.format()),
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: ShapeDecoration(
+                    color: isSelected ? kind.dark : Colors.grey.shade300,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
-                ],
-              ),
-            ],
-          ),
+                  child: Text(duration.format()),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
