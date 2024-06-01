@@ -19,7 +19,7 @@
 
 * Plan your week
 * Four types of activities
-* Create infinity of activitier
+* Create unlimited activities
 * Beautiful design
 
 ## How To Use
