@@ -4,103 +4,6 @@ void main() {
   runApp(const MyApp());
 }
 
-final activitiesData = [
-  Activity(
-    title: "Planning I",
-    subtitle: "Set time for tasks",
-    duration: const Duration(hours: 1),
-    kind: Kind.handsOn,
-    weekday: Weekday.monday,
-  ),
-  Activity(
-    title: "Define",
-    subtitle: "Big idea and essential questions",
-    duration: const Duration(hours: 1),
-    kind: Kind.handsOn,
-    weekday: Weekday.monday,
-  ),
-  Activity(
-    title: "Matriz CSD",
-    subtitle: "Guiding questions",
-    duration: const Duration(minutes: 30),
-    kind: Kind.handsOn,
-    weekday: Weekday.monday,
-  ),
-  Activity(
-    title: "Desk Research",
-    duration: const Duration(minutes: 30),
-    kind: Kind.handsOn,
-    weekday: Weekday.monday,
-  ),
-  // Tuesday
-  Activity(
-    title: "Plan Interview",
-    subtitle:
-        "Elaborate forms/questions, reach out to users and schedule interviews.",
-    duration: const Duration(hours: 2, minutes: 30),
-    kind: Kind.handsOn,
-    weekday: Weekday.tuesday,
-  ),
-  Activity(
-    title: "Validate",
-    subtitle: "Ask mentors",
-    duration: const Duration(minutes: 30),
-    kind: Kind.talk,
-    weekday: Weekday.tuesday,
-  ),
-  // Wednesday
-  Activity(
-    title: "Status Report II",
-    duration: const Duration(hours: 1),
-    kind: Kind.presentation,
-    weekday: Weekday.wednesday,
-  ),
-  Activity(
-    title: "Workshop",
-    subtitle: "UX Cards",
-    duration: const Duration(minutes: 45),
-    kind: Kind.talk,
-    weekday: Weekday.wednesday,
-  ),
-  Activity(
-    title: "SOS Day",
-    subtitle: "Go back to pendencies",
-    duration: const Duration(minutes: 15, hours: 1),
-    kind: Kind.handsOn,
-    weekday: Weekday.wednesday,
-  ),
-  // Thursday
-  Activity(
-    title: "Interview",
-    subtitle: "Make interviews and go to other places",
-    duration: const Duration(hours: 1, minutes: 30),
-    kind: Kind.handsOn,
-    weekday: Weekday.thursday,
-  ),
-  Activity(
-    title: "Benchmarking",
-    subtitle: "Research for similar cases",
-    duration: const Duration(hours: 1, minutes: 30),
-    kind: Kind.handsOn,
-    weekday: Weekday.thursday,
-  ),
-  // Friday
-  Activity(
-    title: "Interview",
-    subtitle: "Make interviews and go to other places",
-    duration: const Duration(hours: 2),
-    kind: Kind.handsOn,
-    weekday: Weekday.friday,
-  ),
-  Activity(
-    title: "Documentation",
-    subtitle: "Week 2 and 3",
-    duration: const Duration(hours: 1),
-    kind: Kind.tasks,
-    weekday: Weekday.friday,
-  ),
-];
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -117,7 +20,7 @@ class MyApp extends StatelessWidget {
 }
 
 class ActivityController extends ChangeNotifier {
-  List<Activity> activities = activitiesData;
+  List<Activity> activities = [];
 
   void add(Activity activity) {
     activities.add(activity);
@@ -152,7 +55,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    int _maxColumnCount() {
+    int maxColumnCount() {
       if (size.width < 600) {
         return 1;
       }
@@ -234,10 +137,22 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 32),
           Row(
+            children: Weekday.all
+                .getRange(0, maxColumnCount())
+                .map((weekday) {
+                  return Expanded(
+                    child: HeaderCard(name: weekday.name),
+                  );
+                })
+                .toList()
+                .withDivider(const SizedBox(width: 32)),
+          ),
+          const SizedBox(height: 16),
+          Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: Weekday.all
-                .getRange(0, _maxColumnCount())
+                .getRange(0, maxColumnCount())
                 .map((weekday) {
                   return Expanded(
                     child: WeekdayColumn(
@@ -576,8 +491,6 @@ class _WeekdayColumnState extends State<WeekdayColumn> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          HeaderCard(name: widget.weekday.name),
-          const SizedBox(height: 16),
           ...widget.controller.activities
               .where((activity) => activity.weekday == widget.weekday)
               .map((activity) {
@@ -612,6 +525,10 @@ class _WeekdayColumnState extends State<WeekdayColumn> {
 
 extension on List<Widget> {
   List<Widget> withDivider(Widget divider) {
+    if (isEmpty) {
+      return this;
+    }
+
     return List.generate(length * 2 - 1, (index) {
       if (index.isEven) {
         return this[index ~/ 2];
